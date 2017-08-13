@@ -1,4 +1,4 @@
-# TRH
+# My Trellis Project
 
 This is a Trellis-managed, Bedrock-based wordpress site.
 
