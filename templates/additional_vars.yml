@@ -1,0 +1,7 @@
+    backup:
+      enabled: true
+      auto: false # set to true if you want to actually do backups.
+      target: scp://user@example.com/example.com_backups # any location supported by duplicity
+      # see http://duplicity.nongnu.org/duplicity.1.html#sect7
+      schedule: '0 4 * * *' # cron time of backups (change this value)
+      purge: false # switch to true to enable automatic purging of old backups

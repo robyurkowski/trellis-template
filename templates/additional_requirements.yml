@@ -1,0 +1,7 @@
+- name: trellis-backup
+  src: guilro.trellis-backup
+  version: 1.0.0
+
+- name: Stouts.backup
+  src: Stouts.backup
+  version: 3.4.5
