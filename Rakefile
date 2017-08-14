@@ -1,9 +1,44 @@
+################################################################################
+# Constants
+################################################################################
 TRELLIS_REPO    = "https://github.com/roots/trellis.git"
 TRELLIS_FOLDER  = "provision"
 BEDROCK_REPO    = "https://github.com/roots/bedrock.git"
 BEDROCK_FOLDER  = "site"
+BASE_REPO       = "https://github.com/robyurkowski/trellis-template.git"
+BASE_FOLDER     = "./"
 
+
+################################################################################
+# Helpers
+################################################################################
+def branch_and_sync(repo:, dest:)
+
+  `git checkout -b upgrade`
+  `git clone --depth=1 #{repo} upgrade`
+  `rm -rf upgrade/.git`
+  `rsync -ah --progress upgrade/ #{dest}`
+  `rm -rf upgrade`
+
+  all_done "Now review the changes, discarding any that might overwrite your own local changes.\n\nAfterward, commit the changes and merge into master. Then delete the update branch."
+end
+
+def all_done(msg)
+  puts "-----------------"
+  puts msg
+  puts "-----------------"
+end
+
+
+################################################################################
+# Bootstrap
+################################################################################
 namespace :bootstrap do
+  desc "Cleans the base folder after a successful clone"
+  task :base do
+    `rm -rf #{BASE_FOLDER}/.git`
+  end
+
   desc "Downloads trellis."
   task :trellis do
     `git clone --depth=1 #{TRELLIS_REPO} #{TRELLIS_FOLDER}`
@@ -48,26 +83,29 @@ namespace :bootstrap do
     `cd #{TRELLIS_FOLDER} && ansible-galaxy install -r requirements.yml`
   end
 
-  task default: [:trellis, :bedrock, :inject_extras, :build_trellis_deps]
+  task default: [:base, :trellis, :bedrock, :inject_extras, :build_trellis_deps]
 end
 
 desc "Completely loads the project from just this Rakefile."
 task :bootstrap => 'bootstrap:default'
 
+
+################################################################################
+# Update
+################################################################################
 namespace :update do
   desc "Updates trellis."
   task :trellis do
-    `git checkout -b update-trellis`
-    `git clone --depth=1 #{TRELLIS_REPO} trellis_upgrade`
-    `rm -rf trellis_upgrade/.git`
-    `rsync -ah --progress trellis_upgrade/ #{TRELLIS_FOLDER}`
-    `rm -rf trellis_upgrade`
+    branch_and_sync(repo: TRELLIS_REPO, dest: TRELLIS_FOLDER)
+  end
 
-    puts "-----------------"
-    puts "Now review the changes, discarding any that might overwrite your own local changes."
-    puts ""
-    puts "Afterward, commit the changes and merge into master. Then delete the update-trellis branch."
-    puts "-----------------"
+  desc "Updates bedrock."
+  task :bedrock do
+    branch_and_sync(repo: BEDROCK_REPO, dest: BEDROCK_FOLDER)
+  end
+
+  desc "Updates base rakefile."
+  task :base do
+    branch_and_sync(repo: BASE_REPO, dest: BASE_FOLDER)
   end
 end
-
