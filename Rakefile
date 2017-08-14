@@ -34,9 +34,10 @@ end
 # Bootstrap
 ################################################################################
 namespace :bootstrap do
-  desc "Cleans the base folder after a successful clone"
+  desc "Cleans and preps base folder after a successful clone"
   task :base do
     `rm -rf #{BASE_FOLDER}/.git`
+    `git init`
   end
 
   desc "Downloads trellis."
