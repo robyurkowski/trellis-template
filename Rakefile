@@ -13,6 +13,11 @@ BEDROCK_REPO    = "https://github.com/roots/bedrock.git"
 ################################################################################
 # Helpers
 ################################################################################
+def ask(question)
+  print "#{question} "
+  gets.chomp
+end
+
 def branch_and_sync(repo:, dest:)
 
   `git checkout -b upgrade`
@@ -28,6 +33,34 @@ def all_done(msg)
   puts "-----------------"
   puts msg
   puts "-----------------"
+end
+
+def find_and_replace(files:, find:, replace_with:)
+  Dir["#{files}"].each do |file|
+    buff = File.read(file)
+    buff.gsub!(find, replace_with)
+    File.write(file, buff)
+  end
+end
+
+def append_to_file(dest:, file: nil, string: nil, after: nil)
+  raise "Neither a file nor a string were given" unless file || string
+  dest_content = File.read(dest)
+  content      = file ? File.read(file) : string
+  short_content = file ? file : string[0..25]
+
+  if dest_content.include? content
+    puts "- #{dest} already contains #{short_content}"
+  else
+    if after
+      dest_content.gsub!(after, /\0#{after}/)
+      File.open(dest, "w") {|f| f.puts content }
+    else
+      File.open(dest, "a") {|f| f.puts content }
+    end
+
+    puts "- Wrote #{short_content} to #{dest}"
+  end
 end
 
 
@@ -71,15 +104,7 @@ namespace :bootstrap do
 
     injections.each do |file, destinations|
       destinations.each do |dest|
-        dest_content = File.read(dest)
-        file_content = File.read("templates/#{file}")
-
-        if dest_content.include? file_content
-          puts "- #{dest} already contains #{file}"
-        else
-          File.open("templates/#{file}", "a") {|f| f.puts file_content }
-          puts "- Wrote #{file} to #{dest}"
-        end
+        append_to_file(dest: dest, file: "templates/#{file}")
       end
     end
   end
@@ -88,6 +113,24 @@ namespace :bootstrap do
   task build_trellis_deps: [:trellis] do
     `cd #{TRELLIS_FOLDER} && ansible-galaxy install -r requirements.yml`
   end
+
+  desc "Injects a vault pass file."
+  task inject_vault_pass_file: [:trellis] do
+    vault_pass_file = ask "Where would you like to write the vault pass to?"
+    vault_pass = ask "What's the password?"
+    File.write(File.expand_path(vault_pass_file), vault_pass)
+
+    append_to_file(
+      dest: "#{TRELLIS_FOLDER}/ansible.cfg",
+      string: "vault_password_file = #{vault_pass_file}",
+      after: /\[defaults\]/
+    )
+  end
+
+  # desc "Substitutes any example.com or example.dev for the given domain."
+  # task sub_domains: [:trellis] do
+  # end
+
 
   task default: [:base, :trellis, :bedrock, :inject_extras, :build_trellis_deps]
 end
