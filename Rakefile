@@ -127,10 +127,16 @@ namespace :bootstrap do
     )
   end
 
-  # desc "Substitutes any example.com or example.dev for the given domain."
-  # task sub_domains: [:trellis] do
-  # end
+  desc "Substitutes any example.com or example.dev for the given domain."
+  task sub_domains: [:trellis] do
+    domain = ask "What domain are you using?"
 
+    find_and_replace(
+      files: "#{TRELLIS_FOLDER}/group_vars/**/*.yml",
+      find: /example\.(com|dev)/,
+      replace_with: domain
+    )
+  end
 
   task default: [:base, :trellis, :bedrock, :inject_extras, :build_trellis_deps]
 end
