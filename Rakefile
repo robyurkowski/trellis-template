@@ -15,7 +15,7 @@ BEDROCK_REPO    = "https://github.com/roots/bedrock.git"
 ################################################################################
 def ask(question)
   print "#{question} "
-  $STDIN.gets.chomp
+  STDIN.gets.chomp
 end
 
 def branch_and_sync(repo:, dest:)
@@ -53,8 +53,8 @@ def append_to_file(dest:, file: nil, string: nil, after: nil)
     puts "- #{dest} already contains #{short_content}"
   else
     if after
-      dest_content.gsub!(after, /\0#{after}/)
-      File.open(dest, "w") {|f| f.puts content }
+      dest_content.gsub!(after, "\0#{content}")
+      File.open(dest, "w") {|f| f.puts dest_content }
     else
       File.open(dest, "a") {|f| f.puts content }
     end
