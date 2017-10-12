@@ -15,7 +15,7 @@ BEDROCK_REPO    = "https://github.com/roots/bedrock.git"
 ################################################################################
 def ask(question)
   print "#{question} "
-  gets.chomp
+  $STDIN.gets.chomp
 end
 
 def branch_and_sync(repo:, dest:)
