@@ -78,7 +78,7 @@ namespace :bootstrap do
     find_and_replace(
       files: "#{TRELLIS_FOLDER}/group_vars/**/*.yml",
       find: /example\.dev/,
-      replace_with: domain
+      replace_with: domain.split(".")[0..-2].join(".") + ".dev"
     )
 
     find_and_replace(
