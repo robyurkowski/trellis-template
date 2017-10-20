@@ -59,8 +59,8 @@ namespace :bootstrap do
 
     append_to_file(
       dest: "#{TRELLIS_FOLDER}/ansible.cfg",
-      string: "vault_password_file = #{vault_pass_file}",
-      after: /\[defaults\]/
+      string: "vault_password_file = #{vault_pass_file}\n",
+      after: /\[defaults\]\n/
     )
   end
 

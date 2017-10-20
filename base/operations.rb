@@ -33,15 +33,15 @@ end
 
 def append_to_file(dest:, file: nil, string: nil, after: nil)
   raise "Neither a file nor a string were given" unless file || string
-  dest_content = File.read(dest)
-  content      = file ? File.read(file) : string
+  dest_content  = File.read(dest)
+  content       = file ? File.read(file) : string
   short_content = file ? file : string[0..25]
 
   if dest_content.include? content
     puts "- #{dest} already contains #{short_content}"
   else
     if after
-      dest_content.gsub!(after, "\0#{content}")
+      dest_content.gsub!(after, "\\0#{content}")
       File.open(dest, "w") {|f| f.puts dest_content }
     else
       File.open(dest, "a") {|f| f.puts content }
