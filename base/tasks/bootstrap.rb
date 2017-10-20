@@ -2,16 +2,18 @@ namespace :bootstrap do
 
   desc "Cleans and preps base folder after a successful clone"
   task :base do
-    `rm -rf #{ROOT_PATH}/.git`
-    `git init`
+    say "Cleaning up .git"
+    run "rm -rf #{ROOT_PATH}/.git"
+    run "git init"
   end
 
 
   desc "Downloads trellis."
   task :trellis do
     unless File.exist?(TRELLIS_FOLDER)
-      `git clone --depth=1 #{TRELLIS_REPO} #{TRELLIS_FOLDER}`
-      `rm -rf #{TRELLIS_FOLDER}/.git`
+      say "Cloning into #{TRELLIS_FOLDER}"
+      run "git clone --depth=1 #{TRELLIS_REPO} #{TRELLIS_FOLDER}", silent: true
+      run "rm -rf #{TRELLIS_FOLDER}/.git", silent: true
     end
   end
 
@@ -19,9 +21,17 @@ namespace :bootstrap do
   desc "Downloads bedrock."
   task :bedrock do
     unless File.exist?(BEDROCK_FOLDER)
-      `git clone --depth=1 #{BEDROCK_REPO} #{BEDROCK_FOLDER}`
-      `rm -rf #{BEDROCK_FOLDER}/.git`
+      say "Cloning into #{BEDROCK_FOLDER}"
+      run "git clone --depth=1 #{BEDROCK_REPO} #{BEDROCK_FOLDER}", silent: true
+      run "rm -rf #{BEDROCK_FOLDER}/.git", silent: true
     end
+  end
+
+  desc "Does initial commit"
+  task git: [:bedrock, :trellis] do
+    say "Doing initial commit"
+    run "git add -a"
+    run "git commit -m 'Initial commit.'"
   end
 
 
@@ -47,7 +57,7 @@ namespace :bootstrap do
 
   desc "Downloads and installs all trellis requirements."
   task build_trellis_deps: [:trellis] do
-    `cd #{TRELLIS_FOLDER} && ansible-galaxy install -r requirements.yml`
+    run "cd #{TRELLIS_FOLDER} && ansible-galaxy install -r requirements.yml"
   end
 
 
@@ -93,12 +103,22 @@ namespace :bootstrap do
   task encrypt_vault_files: [:trellis] do
     Dir["#{TRELLIS_FOLDER}/group_vars/**/vault.yml"].each do |file|
       file = file.split("/")[1..-1].join("/")
-      `cd #{TRELLIS_FOLDER} && ansible-vault encrypt #{file}`
+      run "cd #{TRELLIS_FOLDER} && ansible-vault encrypt #{file}"
     end
   end
 
 
-  task default: [:base, :trellis, :bedrock, :inject_extras, :build_trellis_deps, :inject_vault_pass_file, :sub_domains, :encrypt_vault_files]
+  task default: [
+    :base,
+    :trellis,
+    :bedrock,
+    :git,
+    :inject_extras,
+    :build_trellis_deps,
+    :inject_vault_pass_file,
+    :sub_domains,
+    :encrypt_vault_files
+  ]
 end
 
 desc "Completely loads the project from just this Rakefile."
