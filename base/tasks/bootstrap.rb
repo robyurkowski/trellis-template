@@ -30,7 +30,7 @@ namespace :bootstrap do
   desc "Does initial commit"
   task git: [:bedrock, :trellis] do
     say "Doing initial commit"
-    run "git add -a"
+    run "git add --all"
     run "git commit -m 'Initial commit.'"
   end
 

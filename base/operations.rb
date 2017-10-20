@@ -22,7 +22,7 @@ def say(msg)
 end
 
 def run(cmd, silent: false)
-  `#{cmd}#{" >& /dev/null" if silent}`
+  `#{cmd}#{" > /dev/null 2>&1" if silent}`
 end
 
 def header(msg)
