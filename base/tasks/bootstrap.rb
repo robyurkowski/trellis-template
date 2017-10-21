@@ -104,8 +104,7 @@ namespace :bootstrap do
   desc "Encrypts vault files."
   task encrypt_vault_files: [:trellis] do
     Dir["#{TRELLIS_FOLDER}/group_vars/**/vault.yml"].each do |file|
-      file = file.split("/")[1..-1].join("/")
-      run "cd #{TRELLIS_FOLDER} && ansible-vault encrypt #{file}"
+      run "cd #{TRELLIS_FOLDER} && ansible-vault encrypt #{file.gsub(TRELLIS_FOLDER, '')}"
     end
   end
 
