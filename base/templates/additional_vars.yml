@@ -1,7 +1,7 @@
     backup:
       enabled: true
       auto: false # set to true if you want to actually do backups.
-      target: scp://user@example.com/example.com_backups # any location supported by duplicity
+      target: s3://s3-<region>-amazonaws.com@example.com/backups # any location supported by duplicity
       # see http://duplicity.nongnu.org/duplicity.1.html#sect7
       schedule: '0 4 * * *' # cron time of backups (change this value)
       purge: false # switch to true to enable automatic purging of old backups
@@ -9,4 +9,4 @@
         - 'export S3_USE_SIGV4="True"'
       post_actions:
         - 'WEBHOOK_URL=""'
-        - 'if [ "$WEBHOOK_URL" != "" ]; if [ $CMD_ERR -ne 0 ]; then curl -H "Content-Type: application/json" -X POST -d \'{"site": "example.com", "message": "The backup failed."}\' $WEBHOOK_URL; fi; fi'
+        - 'if [ "$WEBHOOK_URL" != "" ] && [ $CMD_ERR -ne 0 ]; then curl -H "Content-Type: application/json" -X POST -d \'{"tag": "example.com", "message": "The backup failed."}\' $WEBHOOK_URL; fi'
