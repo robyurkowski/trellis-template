@@ -57,7 +57,8 @@ namespace :bootstrap do
 
   desc "Downloads and installs all trellis requirements."
   task build_trellis_deps: [:trellis] do
-    run "cd #{TRELLIS_FOLDER} && ansible-galaxy install -r requirements.yml"
+    say "Installing trellis requirements"
+    run "cd #{TRELLIS_FOLDER} && ansible-galaxy install -r requirements.yml", silent: true
   end
 
 
@@ -104,6 +105,7 @@ namespace :bootstrap do
   desc "Encrypts vault files."
   task encrypt_vault_files: [:trellis] do
     Dir["#{TRELLIS_FOLDER}/group_vars/**/vault.yml"].each do |file|
+      file = "./#{file.gsub(TRELLIS_FOLDER + '/', '')}"
       run "cd #{TRELLIS_FOLDER} && ansible-vault encrypt #{file.gsub(TRELLIS_FOLDER, '')}"
     end
   end
