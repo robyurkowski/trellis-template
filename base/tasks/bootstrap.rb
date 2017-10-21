@@ -63,8 +63,10 @@ namespace :bootstrap do
 
   desc "Injects a vault pass file."
   task inject_vault_pass_file: [:trellis] do
-    vault_pass_file = ask "Where would you like to write the vault pass to?"
-    vault_pass = ask "What's the password?"
+    default_pass_file = "~/.#{File.basename(ROOT_PATH)}_vault_pass"
+    vault_pass_file   = ask "Where would you like to write the vault pass to?", default: default_pass_file
+    vault_pass        = ask "What's the password?"
+
     File.write(File.expand_path(vault_pass_file), vault_pass)
 
     append_to_file(

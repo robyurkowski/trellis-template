@@ -1,13 +1,15 @@
 ################################################################################
 # Helpers
 ################################################################################
-def ask(question)
+def ask(question, default: nil)
   print "#{question} "
-  STDIN.gets.chomp
+  print "[#{default}] " if default
+
+  input = STDIN.gets.chomp
+  input.empty? ? default : input
 end
 
 def branch_and_sync(repo:, dest:)
-
   `git checkout -b upgrade`
   `git clone --depth=1 #{repo} upgrade`
   `rm -rf upgrade/.git`
@@ -39,7 +41,7 @@ def find_and_replace(files:, find:, replace_with:)
   end
 end
 
-def append_to_file(dest:, file: nil, string: nil, after: nil)
+def append_to_file(dest:, file: nil, string: nil, after: nil, before: nil)
   raise "Neither a file nor a string were given" unless file || string
   dest_content  = File.read(dest)
   content       = file ? File.read(file) : string
@@ -50,6 +52,9 @@ def append_to_file(dest:, file: nil, string: nil, after: nil)
   else
     if after
       dest_content.gsub!(after, "\\0#{content}")
+      File.open(dest, "w") {|f| f.puts dest_content }
+    elsif before
+      dest_content.gsub!(before, "#{content}\\0")
       File.open(dest, "w") {|f| f.puts dest_content }
     else
       File.open(dest, "a") {|f| f.puts content }

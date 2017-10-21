@@ -2,7 +2,6 @@
   src: guilro.trellis-backup
   version: 1.0.0
 
-- name: Stouts.backup
-  src: Stouts.backup
-  version: 3.4.5
+- name: lafranceinsoumise.backup
+  version: 3.6.3
 
