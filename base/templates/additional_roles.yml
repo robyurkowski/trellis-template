@@ -1,2 +1,1 @@
     - { role: trellis-backup, tags: [backup] }
-    - { role: Stouts.backup, tags: [backup] }
