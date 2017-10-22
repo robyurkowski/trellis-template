@@ -64,7 +64,7 @@ namespace :bootstrap do
 
   desc "Injects a vault pass file."
   task inject_vault_pass_file: [:trellis] do
-    default_pass_file = "~/.#{File.basename(ROOT_PATH)}_vault_pass"
+    default_pass_file = "~/.vault/#{File.basename(ROOT_PATH)}"
     vault_pass_file   = ask "Where would you like to write the vault pass to?", default: default_pass_file
     vault_pass        = ask "What's the password?"
 
@@ -99,6 +99,12 @@ namespace :bootstrap do
       find: /example\.com/,
       replace_with: domain
     )
+
+    find_and_replace(
+      files: "Rakefile",
+      find: /example\.com/,
+      replace_with: domain
+    )
   end
 
 
@@ -111,6 +117,12 @@ namespace :bootstrap do
   end
 
 
+  desc "Vagrant ups."
+  task vagrant_up: [:trellis] do
+    run "cd #{TRELLIS_FOLDER} && vagrant up"
+  end
+
+
   task default: [
     :base,
     :trellis,
@@ -120,7 +132,8 @@ namespace :bootstrap do
     :build_trellis_deps,
     :inject_vault_pass_file,
     :sub_domains,
-    :encrypt_vault_files
+    :encrypt_vault_files,
+    :vagrant_up
   ]
 end
 
