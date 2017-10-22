@@ -1,4 +1,4 @@
-namespjace :dev do
+namespace :dev do
   namespace :composer do
     task :install do
       run "vagrant ssh -c 'cd #{REMOTE_APP_FOLDER} && composer install'"

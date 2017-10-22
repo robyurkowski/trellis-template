@@ -117,6 +117,26 @@ namespace :bootstrap do
   end
 
 
+  desc "Adds common plugins."
+  task install_plugins: [:trellis] do
+    plugins = [
+      ["wpackagist-plugin/email-marketing", "^1.0"],
+      ["wpackagist-plugin/wordpress-seo", "^5.1.0"],
+      ["wpackagist-plugin/all-in-one-wp-security-and-firewall", "^4.2.8"],
+      ["wpackagist-plugin/google-analytics-dashboard-for-wp", "^5.1.1.1"],
+      ["wpackagist-plugin/insert-headers-and-footers", "^1.4"],
+    ]
+
+    plugins.each do |(plugin, version)|
+      append_to_file(
+        dest: "#{BEDROCK_FOLDER}/composer.json",
+        string: %Q{    "#{plugin}": "#{version}",\n},
+        after: /"require": \{\n/
+      ) if confirm "Add #{plugin}?"
+    end
+  end
+
+
   desc "Vagrant ups."
   task vagrant_up: [:trellis] do
     run "cd #{TRELLIS_FOLDER} && vagrant up"
@@ -133,7 +153,8 @@ namespace :bootstrap do
     :inject_vault_pass_file,
     :sub_domains,
     :encrypt_vault_files,
-    :vagrant_up
+    :install_plugins,
+    :vagrant_up,
   ]
 end
 

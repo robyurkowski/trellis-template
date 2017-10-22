@@ -9,6 +9,12 @@ def ask(question, default: nil)
   input.empty? ? default : input
 end
 
+def confirm(question, default: "y")
+  print "#{question} [y/n] [default: #{default}] "
+  input = STDIN.gets.chomp
+  (input.empty? ? default : input).downcase == 'y'
+end
+
 def branch_and_sync(repo:, dest:)
   `git checkout -b upgrade`
   `git clone --depth=1 #{repo} upgrade`
