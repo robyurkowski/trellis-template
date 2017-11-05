@@ -1,3 +1,5 @@
+require 'securerandom'
+
 ################################################################################
 # Helpers
 ################################################################################
@@ -23,6 +25,10 @@ def branch_and_sync(repo:, dest:)
   `rm -rf upgrade`
 
   header "Now review the changes, discarding any that might overwrite your own local changes.\n\nAfterward, commit the changes and merge into master. Then delete the update branch."
+end
+
+def generate_password(*args)
+  SecureRandom.hex(*args)
 end
 
 def say(msg)

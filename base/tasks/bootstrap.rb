@@ -1,3 +1,5 @@
+require 'fileutils'
+
 namespace :bootstrap do
 
   desc "Cleans and preps base folder after a successful clone"
@@ -68,6 +70,8 @@ namespace :bootstrap do
     vault_pass_file   = ask "Where would you like to write the vault pass to?", default: default_pass_file
     vault_pass        = ask "What's the password?"
 
+    expanded_path = File.expand_path(vault_pass_file)
+    FileUtils.mkdir_p(File.dirname(expanded_path))
     File.write(File.expand_path(vault_pass_file), vault_pass)
 
     append_to_file(
@@ -105,6 +109,87 @@ namespace :bootstrap do
       find: /example\.com/,
       replace_with: domain
     )
+  end
+
+
+  desc "Sets important variables."
+  task configure_defaults: [:trellis] do
+
+    list_of_files = {
+      "#{TRELLIS_FOLDER}/Vagrantfile" => {
+        # Set machine name
+      },
+
+      "#{TRELLIS_FOLDER}/hosts/production" => {
+        # your_server_hostname
+      },
+
+      "#{TRELLIS_FOLDER}/group_vars/all/mail.yml" => {
+        # %r{(mail_smtp_server): (.+?)} => %Q{\1: <details>},
+        # %r{(mail_admin): admin} => %Q{\1: <details>}, # mail_admin: admin@<your domain>
+      },
+
+      "#{TRELLIS_FOLDER}/group_vars/all/security.yml" => {
+        %r{(sshd_permit_root_login): true}    => %Q{\1: false}
+      },
+
+      "#{TRELLIS_FOLDER}/group_vars/all/vault.yml" => {
+        # vault mail password - hex
+
+      },
+
+      "#{TRELLIS_FOLDER}/group_vars/production/wordpress_sites.yml" => {
+        %r{(repo: git@github.com:)example/example.com.git} => %Q{\1robyurkowski/#{SITE_NAME}.git},
+        %r{(ssl:\s+enabled): false} => %Q{\1: true},
+        # backups stuff
+        # Webhook
+      },
+
+      "#{TRELLIS_FOLDER}/group_vars/production/vault.yml" => {
+        # vault_users
+        # root pw
+        # db_password
+        %r{(auth_key): "generateme"}         => %Q{\1: "#{generate_password}"},
+        %r{(secure_auth_key): "generateme"}  => %Q{\1: "#{generate_password}"},
+        %r{(logged_in_key): "generateme"}    => %Q{\1: "#{generate_password}"},
+        %r{(nonce_key): "generateme"}        => %Q{\1: "#{generate_password}"},
+        %r{(auth_salt): "generateme"}        => %Q{\1: "#{generate_password}"},
+        %r{(secure_auth_salt): "generateme"} => %Q{\1: "#{generate_password}"},
+        %r{(logged_in_salt): "generateme"}   => %Q{\1: "#{generate_password}"},
+        %r{(nonce_salt): "generateme"}       => %Q{\1: "#{generate_password}"},
+        # add backup_target_user / backup_target_pass
+      },
+
+      "#{TRELLIS_FOLDER}/group_vars/production/vault.yml" => {
+        # see prod
+      },
+
+      "#{TRELLIS_FOLDER}/group_vars/staging/wordpress_sites.yml" => {
+        # see prod
+      },
+
+      "#{TRELLIS_FOLDER}/group_vars/development/vault.yml" => {
+        # passwords
+      },
+
+      "#{TRELLIS_FOLDER}/group_vars/development/wordpress_sites.yml" => {
+        # admin email
+        # webhook url - only prod?
+        # backup target
+      },
+
+
+    }
+
+    list_of_files.each do |file, replacements|
+      replacements.each do |to_find, replace_with|
+        find_and_replace(
+          files: file,
+          find: to_find,
+          replace_with: replace_with
+        )
+      end
+    end
   end
 
 
@@ -152,6 +237,7 @@ namespace :bootstrap do
     :build_trellis_deps,
     :inject_vault_pass_file,
     :sub_domains,
+    :configure_defaults,
     :encrypt_vault_files,
     :install_plugins,
     :vagrant_up,
