@@ -1,3 +1,4 @@
+
 require 'fileutils'
 
 namespace :bootstrap do
@@ -95,7 +96,7 @@ namespace :bootstrap do
     find_and_replace(
       files: "#{TRELLIS_FOLDER}/group_vars/**/*.yml",
       find: /example\.dev/,
-      replace_with: domain.split(".")[0..-2].join(".") + ".dev"
+      replace_with: SITE_NAME_DEV
     )
 
     find_and_replace(
@@ -114,6 +115,11 @@ namespace :bootstrap do
 
   desc "Sets important variables."
   task configure_defaults: [:trellis] do
+    smtp_password      = ask "SMTP Password?", default: ""
+    mail_sender        = ask "Send mail as?", default: "admin@#{SITE_NAME}"
+    dev_admin_email    = ask "Admin email (development)?", default: "admin@#{SITE_NAME_DEV}"
+    dev_admin_password = ask "Admin password (development)?", default: "admin"
+    prod_admin_password = ask "Sudo password? (production / staging)?", default: "example_password"
 
     list_of_files = {
       "#{TRELLIS_FOLDER}/Vagrantfile" => {
@@ -121,64 +127,82 @@ namespace :bootstrap do
       },
 
       "#{TRELLIS_FOLDER}/hosts/production" => {
-        # your_server_hostname
+        %r{your_server_hostname} => %Q{#{SITE_NAME}},
       },
 
       "#{TRELLIS_FOLDER}/group_vars/all/mail.yml" => {
-        # %r{(mail_smtp_server): (.+?)} => %Q{\1: <details>},
-        # %r{(mail_admin): admin} => %Q{\1: <details>}, # mail_admin: admin@<your domain>
+        %r{(mail_smtp_server): smtp.#{SITE_NAME}:587} => %Q{\\1: smtp.mailgun.org:587},
+        %r{(mail_admin): admin@#{SITE_NAME}} => %Q{\\1: #{mail_sender}}, # mail_admin: admin@<your domain>
+        %r{(mail_hostname): #{SITE_NAME}} => %Q{\\1: mail.#{SITE_NAME}},
+        %r{(mail_user): smtp_user} => %Q{\\1: postmaster@mail.ridgewaydigital.com},
       },
 
       "#{TRELLIS_FOLDER}/group_vars/all/security.yml" => {
-        %r{(sshd_permit_root_login): true}    => %Q{\1: false}
+        %r{(sshd_permit_root_login): true}    => %Q{\\1: false},
       },
 
       "#{TRELLIS_FOLDER}/group_vars/all/vault.yml" => {
-        # vault mail password - hex
+        %r{(vault_mail_password): smtp_password} => %Q{\\1: #{smtp_password}},
 
-      },
-
-      "#{TRELLIS_FOLDER}/group_vars/production/wordpress_sites.yml" => {
-        %r{(repo: git@github.com:)example/example.com.git} => %Q{\1robyurkowski/#{SITE_NAME}.git},
-        %r{(ssl:\s+enabled): false} => %Q{\1: true},
-        # backups stuff
-        # Webhook
-      },
-
-      "#{TRELLIS_FOLDER}/group_vars/production/vault.yml" => {
-        # vault_users
-        # root pw
-        # db_password
-        %r{(auth_key): "generateme"}         => %Q{\1: "#{generate_password}"},
-        %r{(secure_auth_key): "generateme"}  => %Q{\1: "#{generate_password}"},
-        %r{(logged_in_key): "generateme"}    => %Q{\1: "#{generate_password}"},
-        %r{(nonce_key): "generateme"}        => %Q{\1: "#{generate_password}"},
-        %r{(auth_salt): "generateme"}        => %Q{\1: "#{generate_password}"},
-        %r{(secure_auth_salt): "generateme"} => %Q{\1: "#{generate_password}"},
-        %r{(logged_in_salt): "generateme"}   => %Q{\1: "#{generate_password}"},
-        %r{(nonce_salt): "generateme"}       => %Q{\1: "#{generate_password}"},
-        # add backup_target_user / backup_target_pass
-      },
-
-      "#{TRELLIS_FOLDER}/group_vars/production/vault.yml" => {
-        # see prod
-      },
-
-      "#{TRELLIS_FOLDER}/group_vars/staging/wordpress_sites.yml" => {
-        # see prod
       },
 
       "#{TRELLIS_FOLDER}/group_vars/development/vault.yml" => {
-        # passwords
+        %r{(vault_mysql_root_password): devpw} => %Q{\\1: #{generate_password}},
+        %r{(admin_password:): admin} => %Q{\\1: #{dev_admin_password}},
+        %r{(db_password): example_dbpassword} => %Q{\\1: #{generate_password}},
       },
 
       "#{TRELLIS_FOLDER}/group_vars/development/wordpress_sites.yml" => {
-        # admin email
+        %r{(admin_email): admin@#{SITE_NAME_DEV}} => %Q{\\1: #{dev_admin_email}},
         # webhook url - only prod?
         # backup target
       },
 
+      "#{TRELLIS_FOLDER}/group_vars/production/vault.yml" => {
+        %r{(vault_mysql_root_password): productionpw} => %Q{\\1: #{generate_password}},
+        %r{(password): example_password}              => %Q{\\1: #{prod_admin_password}},
+        %r{(salt): "generateme"}                     => %Q{\\1: "#{generate_password}"},
+        %r{(db_password): example_dbpassword}         => %Q{\\1: #{generate_password}},
+        %r{(auth_key): "generateme"}                  => %Q{\\1: "#{generate_password}"},
+        %r{(secure_auth_key): "generateme"}           => %Q{\\1: "#{generate_password}"},
+        %r{(logged_in_key): "generateme"}             => %Q{\\1: "#{generate_password}"},
+        %r{(nonce_key): "generateme"}                 => %Q{\\1: "#{generate_password}"},
+        %r{(auth_salt): "generateme"}                 => %Q{\\1: "#{generate_password}"},
+        %r{(secure_auth_salt): "generateme"}          => %Q{\\1: "#{generate_password}"},
+        %r{(logged_in_salt): "generateme"}            => %Q{\\1: "#{generate_password}"},
+        %r{(nonce_salt): "generateme"}                => %Q{\\1: "#{generate_password}"},
+        # add backup_target_user / backup_target_pass
+      },
 
+      "#{TRELLIS_FOLDER}/group_vars/production/wordpress_sites.yml" => {
+        %r{(repo: git@github.com:)example/example.com.git} => %Q{\\1robyurkowski/#{SITE_NAME}.git},
+        %r{(ssl:\s+enabled): false} => %Q{\\1: true},
+        # backups stuff
+        # Webhook
+      },
+
+      "#{TRELLIS_FOLDER}/group_vars/staging/vault.yml" => {
+        %r{(vault_mysql_root_password): stagingpw} => %Q{\\1: #{generate_password}},
+        %r{(password): example_password}           => %Q{\\1: #{prod_admin_password}},
+        %r{(salt): "generateme"}                   => %Q{\\1: "#{generate_password}"},
+        %r{(db_password): example_dbpassword}      => %Q{\\1: #{generate_password}},
+        %r{(auth_key): "generateme"}               => %Q{\\1: "#{generate_password}"},
+        %r{(secure_auth_key): "generateme"}        => %Q{\\1: "#{generate_password}"},
+        %r{(logged_in_key): "generateme"}          => %Q{\\1: "#{generate_password}"},
+        %r{(nonce_key): "generateme"}              => %Q{\\1: "#{generate_password}"},
+        %r{(auth_salt): "generateme"}              => %Q{\\1: "#{generate_password}"},
+        %r{(secure_auth_salt): "generateme"}       => %Q{\\1: "#{generate_password}"},
+        %r{(logged_in_salt): "generateme"}         => %Q{\\1: "#{generate_password}"},
+        %r{(nonce_salt): "generateme"}             => %Q{\\1: "#{generate_password}"},
+        # add backup_target_user / backup_target_pass
+      },
+
+      "#{TRELLIS_FOLDER}/group_vars/staging/wordpress_sites.yml" => {
+        %r{(repo: git@github.com:)example/example.com.git} => %Q{\\1robyurkowski/#{SITE_NAME}.git},
+        # backups stuff
+        # Webhook
+        # see prod
+      },
     }
 
     list_of_files.each do |file, replacements|
@@ -198,6 +222,15 @@ namespace :bootstrap do
     Dir["#{TRELLIS_FOLDER}/group_vars/**/vault.yml"].each do |file|
       file = "./#{file.gsub(TRELLIS_FOLDER + '/', '')}"
       run "cd #{TRELLIS_FOLDER} && ansible-vault encrypt #{file.gsub(TRELLIS_FOLDER, '')}"
+    end
+  end
+
+
+  desc "Decrypts vault files."
+  task decrypt_vault_files: [:trellis] do
+    Dir["#{TRELLIS_FOLDER}/group_vars/**/vault.yml"].each do |file|
+      file = "./#{file.gsub(TRELLIS_FOLDER + '/', '')}"
+      run "cd #{TRELLIS_FOLDER} && ansible-vault decrypt #{file.gsub(TRELLIS_FOLDER, '')}"
     end
   end
 

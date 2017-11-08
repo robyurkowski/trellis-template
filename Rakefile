@@ -1,4 +1,5 @@
 SITE_NAME       = "example.com".freeze
+SITE_NAME_DEV   = SITE_NAME.split(".")[0..-2].join(".") + ".dev"
 ROOT_PATH       = File.expand_path("../", __FILE__)
 TRELLIS_FOLDER  = File.join(ROOT_PATH, "provision")
 BEDROCK_FOLDER  = File.join(ROOT_PATH, "site")
